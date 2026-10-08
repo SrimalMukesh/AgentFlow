@@ -1,0 +1,98 @@
+// Prisma Schema for AgentFlow
+// Phase 2 — Backend + Database Foundation
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Service {
+  id               Int           @id @default(autoincrement())
+  name             String
+  description      String
+  provider         String
+  category         String
+  price            Float
+  rating           Float
+  endpoint         String        @default("")
+  active           Boolean       @default(true)
+  capabilities     String        @default("[]")
+  inputDescription String        @default("")
+  outputDescription String       @default("")
+  tags             String        @default("[]")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  transactions Transaction[]
+  agentTasks   AgentTask[]
+}
+
+
+model Agent {
+  id          Int             @id @default(autoincrement())
+  name        String
+  model       String
+  status      String          @default("idle")
+  currentTask String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  activities  AgentActivity[]
+  tasks       AgentTask[]
+}
+
+model AgentTask {
+  id                Int      @id @default(autoincrement())
+  agentId           Int
+  task              String
+  status            String   @default("PENDING")
+  selectedServiceId Int?
+  reasoning         String   @default("")
+  alternativesJson  String   @default("[]")
+  resultFileName    String?
+  resultFileUrl     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  agent             Agent    @relation(fields: [agentId], references: [id])
+  selectedService   Service? @relation(fields: [selectedServiceId], references: [id])
+}
+
+model SpendingPolicy {
+  id               Int      @id @default(autoincrement())
+  dailyLimit       Float
+  maxTransaction   Float
+  autoApproveLimit Float
+  spentToday       Float    @default(0)
+  enabled          Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  serviceId Int
+  amount    Float
+  status    String   @default("pending")
+  network   String   @default("Algorand Testnet")
+  txHash    String   @unique @default("")
+  createdAt DateTime @default(now())
+
+  service   Service  @relation(fields: [serviceId], references: [id])
+}
+
+model AgentActivity {
+  id          Int      @id @default(autoincrement())
+  agentId     Int
+  action      String
+  description String
+  amount      Float?
+  createdAt   DateTime @default(now())
+
+  agent       Agent    @relation(fields: [agentId], references: [id])
+}
+
